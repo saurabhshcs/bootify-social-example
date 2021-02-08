@@ -7,60 +7,46 @@ package com.techsharezone.bootify.social.example.config;
  */
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.encrypt.Encryptors;
-import org.springframework.security.crypto.encrypt.TextEncryptor;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
+@Configuration
+@EnableWebSecurity
+@ComponentScan(basePackages = "com.techsharezone.bootify.social.example.config")
 public class ApplicationConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    private ApplicationContext context;
+    private UserDetailsService userDetailsService;
+//https://www.baeldung.com/facebook-authentication-with-spring-security-and-social
+//    @Autowired
+//    private FacebookConnectionSignup facebookConnectionSignup;
+
+    @Value("${spring.social.facebook.appSecret}")
+    String appSecret;
+
+    @Value("${spring.social.facebook.appId}")
+    String appId;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth)
+            throws Exception {
+        auth.userDetailsService(userDetailsService);
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .formLogin()
-                .loginPage("/signin")
-                .loginProcessingUrl("/signin/authenticate")
-                .defaultSuccessUrl("/connect")
-                .failureUrl("/signin?param.error=bad_credentials")
-                .and()
-                .logout()
-                .logoutUrl("/signout")
-                .deleteCookies("JSESSIONID")
-                .and()
+                .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/", "/webjars/**", "/admin/**", "/favicon.ico", "/resources/**", "/auth/**", "/signin/**", "/signup/**", "/disconnect/facebook").permitAll()
-                .antMatchers("/**").authenticated()
+                .antMatchers("/login*").permitAll()
+                .anyRequest().authenticated()
                 .and()
-                .rememberMe();
+                .formLogin().loginPage("/login").permitAll();
     }
-
-    @Override
-    public void configure(WebSecurity web) throws Exception {
-        web
-                .ignoring()
-                .antMatchers("/**/*.css", "/**/*.png", "/**/*.gif", "/**/*.jpg");
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
-    }
-
-    @Bean
-    public TextEncryptor textEncryptor() {
-        return Encryptors.noOpText();
-    }
-//
-//    @Bean
-//    public SpringSecurityDialect springSecurityDialect() {
-//        return new SpringSecurityDialect();
-//    }
 }
