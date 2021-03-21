@@ -30,7 +30,7 @@ Alternatively, you can run the application using Gradle. To make it easier to bu
 
 To run the application with Gradle:
 
-```sh
+```
 $ gradlew bootRun
 ```
 
